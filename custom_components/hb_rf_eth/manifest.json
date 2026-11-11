@@ -1,0 +1,13 @@
+{
+  "domain": "hb_rf_eth",
+  "name": "HB-RF-ETH",
+  "codeowners": ["@Xerolux"],
+  "config_flow": true,
+  "documentation": "https://github.com/Xerolux/hb-rf-eth-hass",
+  "integration_type": "hub",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/Xerolux/hb-rf-eth-hass/issues",
+  "loggers": ["hb_rf_eth"],
+  "requirements": [],
+  "version": "0.1.0-beta.1"
+}

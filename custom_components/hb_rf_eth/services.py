@@ -91,13 +91,20 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         return
 
     async def handle_backup(call: ServiceCall) -> ServiceResponse:
-        _entry, client = await _client_from_call(hass, call)
+        entry, client = await _client_from_call(hass, call)
         try:
             backup = await client.async_backup()
         except HbRfEthApiError as err:
             raise ServiceValidationError(str(err)) from err
         stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-        serial = str(backup.get("serial") or backup.get("sysinfo", {}).get("serial") or "device")
+        # The device backup JSON is flat and carries no serial; take it from
+        # the coordinator's sysinfo (with the hostname as fallback).
+        sysinfo = hass.data[DOMAIN][entry.entry_id]["coordinator"].data.get(
+            "sysinfo", {}
+        )
+        serial = str(
+            sysinfo.get("serial") or sysinfo.get("hostname") or "device"
+        )
         target = _backup_dir(hass) / f"{serial}-{stamp}.json"
         await hass.async_add_executor_job(_write_json, target, backup)
         _LOGGER.info("Backup written to %s", target)

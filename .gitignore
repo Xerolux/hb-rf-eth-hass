@@ -1,2 +1,25 @@
 __pycache__/
 *.pyc
+
+# Virtual environments
+.venv/
+venv/
+
+# Coverage and test caches
+.coverage*
+htmlcov/
+.pytest_cache/
+
+# Tool output logs and caches
+.ruff_cache/
+.mypy_cache/
+mypy.log
+mypy_errors.txt
+
+# Home Assistant test instance config (local experiments)
+test_ha/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

@@ -1,5 +1,6 @@
-# Development tools. Version floors mirror the violet-hass toolchain so all
-# Xerolux HA integrations lint and test identically.
+# Development tools. Version floors follow the Xerolux HA-integration
+# toolchain (idm-heatpump-hass / violet-hass) so all integrations lint and
+# test identically. Python 3.14 required (Home Assistant 2026.x lane).
 ruff>=0.17.2
 pytest>=9.0.3
 pytest-asyncio>=1.4.0

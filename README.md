@@ -67,5 +67,11 @@ uv pip install --python .venv/bin/python -r requirements-dev.txt
 ## Status
 
 **Beta.** Unit-tested against Home Assistant 2026.10.4 (pytest-homeassistant-
-custom-component); not yet validated against a live gateway. Feedback and
+custom-component) and validated live on HA 2026.11.0 against gateway firmware
+2.4.0 (config flow, entities, backup and update-check services). Feedback and
 logs welcome in the issues.
+
+## License
+
+MIT — see [LICENSE](LICENSE). The gateway firmware itself is licensed
+CC BY-NC-SA 4.0 (see the [firmware repository](https://github.com/Xerolux/HB-RF-ETH-ng)).

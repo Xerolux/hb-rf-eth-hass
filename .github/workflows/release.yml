@@ -1,0 +1,66 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish hb_rf_eth.zip
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version consistency (tag == manifest)
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest = json.loads(
+              Path("custom_components/hb_rf_eth/manifest.json").read_text()
+          )
+          version = manifest["version"]
+          tag = os.environ.get("GITHUB_REF_NAME", "")
+          if tag.startswith("v"):
+              assert tag == f"v{version}", (
+                  f"tag {tag} does not match manifest version {version}"
+              )
+          print(f"version ok: {version}")
+          PY
+
+      - name: Build zip artifact (hacs.json zip_release layout)
+        run: |
+          cd custom_components/hb_rf_eth
+          zip -r ../../hb_rf_eth.zip . \
+            -x "*.pyc" -x "__pycache__/*" -x "*.git*" -x ".DS_Store"
+          cd ../..
+          SIZE=$(du -h hb_rf_eth.zip | cut -f1)
+          echo "Created hb_rf_eth.zip ($SIZE)"
+          sha256sum hb_rf_eth.zip > hb_rf_eth.zip.sha256
+
+      - name: Inspect zip artifact
+        run: |
+          rm -rf /tmp/hb_release
+          mkdir -p /tmp/hb_release/custom_components/hb_rf_eth
+          unzip -q hb_rf_eth.zip -d /tmp/hb_release/custom_components/hb_rf_eth
+          test -f /tmp/hb_release/custom_components/hb_rf_eth/manifest.json
+          test -f /tmp/hb_release/custom_components/hb_rf_eth/services.yaml
+          echo "zip layout ok"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(python -c "import json;print(json.load(open('custom_components/hb_rf_eth/manifest.json'))['version'])")
+          gh release create "v${VERSION}" \
+            --title "HB-RF-ETH integration v${VERSION}" \
+            --generate-notes \
+            hb_rf_eth.zip hb_rf_eth.zip.sha256

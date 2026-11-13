@@ -10,6 +10,6 @@
   "issue_tracker": "https://github.com/Xerolux/hb-rf-eth-hass/issues",
   "loggers": ["hb_rf_eth"],
   "requirements": [],
-  "zeroconf": ["_hb-rf-eth._tcp.local."],
-  "version": "0.3.0-beta.1"
+  "version": "0.3.0-beta.1",
+  "zeroconf": ["_hb-rf-eth._tcp.local."]
 }

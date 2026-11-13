@@ -6,6 +6,7 @@ import logging
 
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 
@@ -23,6 +24,9 @@ from .services import async_setup_services
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ("binary_sensor", "sensor", "update")
+
+# No YAML configuration: setup happens exclusively through the config flow.
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 def entry_options(entry) -> dict:

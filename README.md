@@ -44,10 +44,29 @@ Backups contain secrets — treat the backup folder accordingly.
 
 Settings → Devices & Services → Add Integration → **HB-RF-ETH**
 
-Enter host (or `hb-rf-eth-xxxxxx.local` via mDNS), username and password of
-the device WebUI. A changed device password triggers a reauth prompt
-automatically. The device page offers a diagnostics download for issue
-reports (no credentials included).
+Gateways with firmware **2.4.0 or newer** (built from the stage-1/2 MQTT
+branch) are **discovered automatically** via mDNS (`_hb-rf-eth._tcp`) —
+you only enter the WebUI credentials. Manual setup with a host/IP works
+for older firmware. A changed device password triggers a reauth prompt
+automatically; connection changes (new IP, credentials) use the native
+**Reconfigure** action on the config entry.
+
+### Options (Configure on the config entry)
+
+| Option | Description |
+|---|---|
+| Services only | Registers **no entities** — for setups where the gateway already delivers its ~84 entities via the firmware's native MQTT/HA auto-discovery. The integration then only provides its services; duplicates are avoided, the device is not polled redundantly. |
+| Poll interval | REST polling interval, 10–300 s (default 30 s). |
+
+### Coexistence with the native MQTT discovery
+
+The firmware offers both paths; the recommended combination is:
+**MQTT discovery for the live entity surface** (switches, numbers,
+selects, events, update entities — token-gated) **plus this integration
+in services-only mode** (backup/restore, log download, restart,
+reauth, diagnostics). Device load stays modest: MQTT publishes its
+status once per minute, the REST coordinator sends three small GETs per
+poll interval (~50 KB heap free with both active on an ESP32 WROOM).
 
 ## Installation (HACS)
 
@@ -60,7 +79,7 @@ reports (no credentials included).
 ```bash
 uv venv --python 3.14 .venv
 uv pip install --python .venv/bin/python -r requirements-dev.txt
-.venv/bin/python -m pytest -q tests   # 31 tests against HA 2026.10.4
+.venv/bin/python -m pytest -q tests   # 36 tests against HA 2026.10.4
 .venv/bin/ruff check custom_components tests
 ```
 

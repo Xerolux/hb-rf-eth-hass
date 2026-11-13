@@ -9,6 +9,21 @@
           "password": "Passwort"
         }
       },
+      "zeroconf_confirm": {
+        "description": "Ein HB-RF-ETH-Gateway wurde unter {host} gefunden (Seriennummer {serial}). Gib die WebUI-Zugangsdaten ein, um es hinzuzufügen.",
+        "data": {
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "reconfigure": {
+        "description": "Aktualisiere die Verbindungsdaten des HB-RF-ETH-Gateways (z. B. nach IP-Wechsel oder Passwortänderung).",
+        "data": {
+          "host": "Host",
+          "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
       "reauth_confirm": {
         "description": "Das Gateway unter {host} hat die gespeicherten Zugangsdaten abgelehnt (Passwort geändert?). Gib das neue WebUI-Passwort ein.",
         "data": {
@@ -18,10 +33,24 @@
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
-      "invalid_auth": "Ungültige Anmeldung"
+      "invalid_auth": "Ungültige Anmeldung",
+      "invalid_interval": "Abfrageintervall muss zwischen 10 und 300 Sekunden liegen"
     },
     "abort": {
       "already_configured": "Dieses Gateway ist bereits eingerichtet"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "services_only": "Nur Dienste (keine Entitäten) — aktivieren, wenn das Gateway bereits Entitäten per MQTT-Discovery bereitstellt",
+          "poll_interval": "Abfrageintervall (Sekunden)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Abfrageintervall muss zwischen 10 und 300 Sekunden liegen"
     }
   },
   "services": {

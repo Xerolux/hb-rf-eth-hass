@@ -11,7 +11,13 @@ from homeassistant.helpers import device_registry as dr
 
 from custom_components.hb_rf_eth.const import DOMAIN
 
-from .conftest import BACKUP_RESPONSE, HOST, SERIAL
+from .conftest import (
+    BACKUP_RESPONSE,
+    HOST,
+    LOGIN_RESPONSE,
+    SERIAL,
+    SYSINFO_RESPONSE,
+)
 
 pytestmark = pytest.mark.usefixtures("config_entry")
 
@@ -167,11 +173,54 @@ async def test_update_check_service(hass, aioclient_mock, config_entry):
     assert response == {"accepted": True, "channel": "beta"}
 
 
-async def test_service_without_matching_target_fails(hass, config_entry):
+async def test_service_requires_target_with_multiple_gateways(
+    hass, aioclient_mock, config_entry
+):
+    """The target-optional fallback only applies to a single gateway."""
+    from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
+    from pytest_homeassistant_custom_component.common import MockConfigEntry
+
     assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    # Second, fully working gateway on another address.
+    aioclient_mock.post("http://10.0.0.43/login.json", json=LOGIN_RESPONSE)
+    aioclient_mock.get("http://10.0.0.43/sysinfo.json", json=SYSINFO_RESPONSE)
+    aioclient_mock.get(
+        "http://10.0.0.43/api/update/status", json={"state": "idle"}
+    )
+    entry2 = MockConfigEntry(
+        domain=DOMAIN,
+        title="second",
+        data={CONF_HOST: "10.0.0.43", CONF_USERNAME: "admin", CONF_PASSWORD: "pw"},
+        unique_id="SECOND8SERIAL",
+    )
+    entry2.add_to_hass(hass)
+    assert await hass.config_entries.async_setup(entry2.entry_id)
     await hass.async_block_till_done()
 
     with pytest.raises(ServiceValidationError):
         await hass.services.async_call(
-            DOMAIN, "restart", {"device_id": "no-such-device"}, blocking=True
+            DOMAIN,
+            "restart",
+            {"device_id": "no-such-device"},
+            blocking=True,
         )
+
+
+async def test_service_target_optional_with_single_gateway(
+    hass, aioclient_mock, config_entry
+):
+    """Services-only mode has no entities to target: one gateway = no target."""
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+
+    aioclient_mock.post(f"http://{HOST}/api/update/check", json={"outcome": "accepted"})
+    response = await hass.services.async_call(
+        DOMAIN,
+        "update_check",
+        {},
+        blocking=True,
+        return_response=True,
+    )
+    assert response == {"accepted": True, "channel": "configured"}

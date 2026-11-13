@@ -4,7 +4,8 @@ backup:
     Downloads the full settings backup of the gateway (including
     credentials and certificates) and stores it as a JSON file in the
     "hb_rf_eth_backups" folder of your Home Assistant configuration
-    directory. Treat the file as a secret.
+    directory. Treat the file as a secret. When only one gateway is
+    configured (especially in services-only mode) the target is optional.
   target:
     entity: []
   fields: {}

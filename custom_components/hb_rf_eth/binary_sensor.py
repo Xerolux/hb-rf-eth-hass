@@ -6,22 +6,25 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .coordinator import HbRfEthCoordinator, HbRfEthEntity
+from .coordinator import HbRfEthCoordinator, HbRfEthEntity, services_only
 
 SENSORS = (
     BinarySensorEntityDescription(
         key="ethernet_connected",
         name="Ethernet",
         device_class="connectivity",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="ccu_connected",
         name="CCU Relay",
         device_class="connectivity",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
 
@@ -29,6 +32,8 @@ SENSORS = (
 async def async_setup_entry(
     hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if services_only(entry):
+        return
     coordinator: HbRfEthCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     async_add_entities(
         HbRfEthBinarySensor(coordinator, description) for description in SENSORS

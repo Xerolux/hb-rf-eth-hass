@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .coordinator import HbRfEthCoordinator, HbRfEthEntity
+from .coordinator import HbRfEthCoordinator, HbRfEthEntity, services_only
 
 SENSORS = (
     SensorEntityDescription(
@@ -19,12 +19,14 @@ SENSORS = (
         name="CPU Usage",
         native_unit_of_measurement=PERCENTAGE,
         state_class="measurement",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="memoryUsage",
         name="Memory Usage",
         native_unit_of_measurement=PERCENTAGE,
         state_class="measurement",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="uptimeSeconds",
@@ -32,6 +34,7 @@ SENSORS = (
         device_class="duration",
         native_unit_of_measurement="s",
         state_class="total_increasing",
+        entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="currentVersion",
@@ -49,6 +52,8 @@ SENSORS = (
 async def async_setup_entry(
     hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if services_only(entry):
+        return
     coordinator: HbRfEthCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     async_add_entities(
         HbRfEthSensor(coordinator, description) for description in SENSORS

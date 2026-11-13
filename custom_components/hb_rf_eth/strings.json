@@ -9,6 +9,21 @@
           "password": "Password"
         }
       },
+      "zeroconf_confirm": {
+        "description": "A HB-RF-ETH gateway was discovered at {host} (serial {serial}). Enter the WebUI credentials to add it.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reconfigure": {
+        "description": "Update the connection data of the HB-RF-ETH gateway (for example after an IP change or a password rotation).",
+        "data": {
+          "host": "Host",
+          "username": "Username",
+          "password": "Password"
+        }
+      },
       "reauth_confirm": {
         "description": "The gateway at {host} rejected the stored credentials (password changed?). Enter the new WebUI password.",
         "data": {
@@ -18,10 +33,24 @@
     },
     "error": {
       "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid authentication"
+      "invalid_auth": "Invalid authentication",
+      "invalid_interval": "Poll interval must be between 10 and 300 seconds"
     },
     "abort": {
       "already_configured": "This gateway is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "services_only": "Services only (no entities) — enable when the gateway already provides entities via MQTT discovery",
+          "poll_interval": "Poll interval (seconds)"
+        }
+      }
+    },
+    "error": {
+      "invalid_interval": "Poll interval must be between 10 and 300 seconds"
     }
   },
   "services": {

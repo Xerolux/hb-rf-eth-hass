@@ -15,18 +15,24 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from .api import HbRfEthApiError, HbRfEthAuthError, HbRfEthClient
-from .const import DOMAIN, POLL_INTERVAL_SECONDS
+from .const import DEFAULT_POLL_INTERVAL_SECONDS, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class HbRfEthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    def __init__(self, hass: HomeAssistant, client: HbRfEthClient, host: str) -> None:
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        client: HbRfEthClient,
+        host: str,
+        poll_interval: int = DEFAULT_POLL_INTERVAL_SECONDS,
+    ) -> None:
         super().__init__(
             hass,
             _LOGGER,
             name=f"{DOMAIN} {host}",
-            update_interval=timedelta(seconds=POLL_INTERVAL_SECONDS),
+            update_interval=timedelta(seconds=poll_interval),
         )
         self.client = client
         self.host = host
@@ -65,3 +71,16 @@ class HbRfEthEntity(CoordinatorEntity[HbRfEthCoordinator]):
             "sw_version": info.get("currentVersion"),
             "hw_version": info.get("boardRevision"),
         }
+
+
+def services_only(entry) -> bool:
+    """True when the entry runs in services-only coexistence mode.
+
+    Used by installations that take their entities from the firmware's
+    native MQTT/HA auto-discovery: the integration then registers no
+    entities and only provides its services (backup/restore/log/...).
+    """
+    from .const import CONF_SERVICES_ONLY, DEFAULT_OPTIONS
+
+    options = {**DEFAULT_OPTIONS, **(entry.options or {})}
+    return bool(options.get(CONF_SERVICES_ONLY, False))

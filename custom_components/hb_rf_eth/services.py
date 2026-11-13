@@ -42,7 +42,9 @@ RESTORE_SCHEMA = vol.Schema(
 )
 UPDATE_CHECK_SCHEMA = vol.Schema(
     {
-        vol.Optional("channel", default=None): vol.In(["stable", "beta"]),
+        # No default: probatio validates defaults too, and None is not a
+        # valid channel. The handler treats a missing key as "configured".
+        vol.Optional("channel"): vol.In(["stable", "beta"]),
     },
     extra=vol.ALLOW_EXTRA,
 )
@@ -74,6 +76,16 @@ async def _client_from_call(
         for entry_id in await async_extract_config_entry_ids(call)
         if (data := hass.data.get(DOMAIN, {}).get(entry_id)) and "client" in data
     ]
+    if not entry_ids:
+        # Services-only mode registers no entities, so there is nothing to
+        # target. With exactly one configured gateway the target is optional.
+        configured = [
+            entry_id
+            for entry_id, data in hass.data.get(DOMAIN, {}).items()
+            if isinstance(data, dict) and "client" in data
+        ]
+        if len(configured) == 1:
+            entry_ids = configured
     if not entry_ids:
         raise ServiceValidationError(
             "no HB-RF-ETH device matched the service target",

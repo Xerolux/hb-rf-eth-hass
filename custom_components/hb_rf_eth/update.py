@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
-from .coordinator import HbRfEthCoordinator, HbRfEthEntity
+from .coordinator import HbRfEthCoordinator, HbRfEthEntity, services_only
 
 INSTALL_ACTIVE_STATES = {"preparing", "downloading", "verifying", "finalizing"}
 
@@ -21,6 +21,8 @@ INSTALL_ACTIVE_STATES = {"preparing", "downloading", "verifying", "finalizing"}
 async def async_setup_entry(
     hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if services_only(entry):
+        return
     coordinator: HbRfEthCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     async_add_entities(
         [

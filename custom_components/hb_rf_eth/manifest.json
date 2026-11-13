@@ -1,17 +1,15 @@
 {
   "domain": "hb_rf_eth",
   "name": "HB-RF-ETH",
-  "codeowners": [
-    "@Xerolux"
-  ],
+  "codeowners": ["@Xerolux"],
   "config_flow": true,
+  "dependencies": [],
   "documentation": "https://github.com/Xerolux/hb-rf-eth-hass",
   "integration_type": "hub",
   "iot_class": "local_polling",
   "issue_tracker": "https://github.com/Xerolux/hb-rf-eth-hass/issues",
-  "loggers": [
-    "hb_rf_eth"
-  ],
+  "loggers": ["hb_rf_eth"],
   "requirements": [],
-  "version": "0.2.0-beta.1"
+  "zeroconf": ["_hb-rf-eth._tcp.local."],
+  "version": "0.3.0-beta.1"
 }

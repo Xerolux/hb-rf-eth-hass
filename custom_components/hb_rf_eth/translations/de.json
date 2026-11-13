@@ -2,20 +2,48 @@
   "config": {
     "step": {
       "user": {
-        "description": "Mit deinem HB-RF-ETH-ng Gateway verbinden.",
+        "description": "Verbinde dich mit deinem HB-RF-ETH-Gateway. Nutze den Host (oder den mDNS-Namen wie hb-rf-eth-xxxxxx.local) plus die WebUI-Zugangsdaten des Geräts.",
         "data": {
-          "host": "Hostname oder IP-Adresse",
+          "host": "Host",
           "username": "Benutzername",
+          "password": "Passwort"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Das Gateway unter {host} hat die gespeicherten Zugangsdaten abgelehnt (Passwort geändert?). Gib das neue WebUI-Passwort ein.",
+        "data": {
           "password": "Passwort"
         }
       }
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
-      "invalid_auth": "Ungültige Zugangsdaten"
+      "invalid_auth": "Ungültige Anmeldung"
     },
     "abort": {
       "already_configured": "Dieses Gateway ist bereits eingerichtet"
+    }
+  },
+  "services": {
+    "backup": {
+      "name": "Backup erstellen",
+      "description": "Lädt das vollständige Einstellungs-Backup (inkl. Zugangsdaten und Zertifikate) in den Ordner hb_rf_eth_backups des Konfigurationsverzeichnisses. Behandle die Datei als Geheimnis."
+    },
+    "restore": {
+      "name": "Backup wiederherstellen",
+      "description": "Stellt ein zuvor mit dem Backup-Dienst erzeugtes Einstellungs-Backup wieder her."
+    },
+    "download_log": {
+      "name": "Systemlog herunterladen",
+      "description": "Lädt das komplette erfasste Systemlog in den Ordner hb_rf_eth_backups."
+    },
+    "restart": {
+      "name": "Gateway neu starten",
+      "description": "Startet das Gateway neu. Die CCU verbindet sich automatisch wieder."
+    },
+    "update_check": {
+      "name": "Nach Updates suchen",
+      "description": "Startet eine manuelle Update-Suche auf dem Gateway."
     }
   }
 }

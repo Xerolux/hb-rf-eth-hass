@@ -2,10 +2,16 @@
   "config": {
     "step": {
       "user": {
-        "description": "Connect to your HB-RF-ETH-ng gateway.",
+        "description": "Connect to your HB-RF-ETH gateway. Use the host (or the mDNS name like hb-rf-eth-xxxxxx.local) plus the WebUI credentials of the device.",
         "data": {
-          "host": "Host or IP address",
+          "host": "Host",
           "username": "Username",
+          "password": "Password"
+        }
+      },
+      "reauth_confirm": {
+        "description": "The gateway at {host} rejected the stored credentials (password changed?). Enter the new WebUI password.",
+        "data": {
           "password": "Password"
         }
       }
@@ -16,6 +22,28 @@
     },
     "abort": {
       "already_configured": "This gateway is already configured"
+    }
+  },
+  "services": {
+    "backup": {
+      "name": "Create backup",
+      "description": "Downloads the full settings backup (including credentials and certificates) into the hb_rf_eth_backups folder of your configuration directory. Treat the file as a secret."
+    },
+    "restore": {
+      "name": "Restore backup",
+      "description": "Restores a settings backup previously created by the backup service."
+    },
+    "download_log": {
+      "name": "Download system log",
+      "description": "Downloads the complete captured system log into the hb_rf_eth_backups folder."
+    },
+    "restart": {
+      "name": "Restart gateway",
+      "description": "Restarts the gateway. The CCU reconnects automatically."
+    },
+    "update_check": {
+      "name": "Check for updates",
+      "description": "Starts a manual update search on the gateway."
     }
   }
 }

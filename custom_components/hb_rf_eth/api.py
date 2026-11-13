@@ -13,6 +13,15 @@ import aiohttp
 
 _LOGGER = logging.getLogger(__name__)
 
+# Update installation is asynchronous on the device: POST /api/update/install
+# returns immediately and progress arrives via GET /api/update/status
+# ("install" block). The same applies to a manual update search.
+LOGIN_TIMEOUT_SECONDS = 10
+REQUEST_TIMEOUT_SECONDS = 30
+# A full settings backup (including certificates) can reach several dozen KiB
+# on slow links; give the transfer room without hanging the service call.
+TRANSFER_TIMEOUT_SECONDS = 120
+
 
 class HbRfEthApiError(Exception):
     """Base error."""
@@ -27,24 +36,35 @@ class HbRfEthConnectionError(HbRfEthApiError):
 
 
 class HbRfEthClient:
-    def __init__(self, host: str, username: str, password: str) -> None:
+    def __init__(
+        self,
+        host: str,
+        username: str,
+        password: str,
+        session: aiohttp.ClientSession | None = None,
+    ) -> None:
         self._host = host.rstrip("/")
         self._username = username
         self._password = password
         self._base = f"http://{self._host}"
         self._token: str | None = None
-        self._session: aiohttp.ClientSession | None = None
+        # An external session (the HA shared session) is used but never
+        # owned: close() leaves it open. Tests inject the mocked session.
+        self._session: aiohttp.ClientSession | None = session
+        self._owns_session = session is None
 
     async def _ensure_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=10)
+                timeout=aiohttp.ClientTimeout(total=REQUEST_TIMEOUT_SECONDS)
             )
+            self._owns_session = True
         return self._session
 
     async def close(self) -> None:
-        if self._session and not self._session.closed:
+        if self._owns_session and self._session and not self._session.closed:
             await self._session.close()
+        self._session = None if not self._owns_session else self._session
 
     async def async_login(self) -> str:
         """Authenticate and cache the token."""
@@ -53,6 +73,7 @@ class HbRfEthClient:
             async with session.post(
                 f"{self._base}/login.json",
                 json={"username": self._username, "password": self._password},
+                timeout=aiohttp.ClientTimeout(total=LOGIN_TIMEOUT_SECONDS),
             ) as resp:
                 if resp.status == 401:
                     raise HbRfEthAuthError("invalid credentials")
@@ -66,45 +87,57 @@ class HbRfEthClient:
         self._token = token
         return token
 
-    async def _get(self, path: str) -> Any:
+    async def _request(
+        self,
+        method: str,
+        path: str,
+        *,
+        payload: dict[str, Any] | None = None,
+        json_response: bool = True,
+        timeout_seconds: int = REQUEST_TIMEOUT_SECONDS,
+        _retried: bool = False,
+    ) -> Any:
         if self._token is None:
             await self.async_login()
         session = await self._ensure_session()
         try:
-            async with session.get(
+            async with session.request(
+                method,
                 f"{self._base}{path}",
+                json=payload,
                 headers={"Authorization": f"Token {self._token}"},
+                timeout=aiohttp.ClientTimeout(total=timeout_seconds),
             ) as resp:
-                if resp.status == 401:
-                    # Token rejected (device restarted with a new one): retry once.
+                if resp.status == 401 and not _retried:
+                    # Token rejected (device restarted with a new one): retry
+                    # exactly once with a fresh login.
                     self._token = None
                     await self.async_login()
-                    return await self._get(path)
+                    return await self._request(
+                        method,
+                        path,
+                        payload=payload,
+                        json_response=json_response,
+                        timeout_seconds=timeout_seconds,
+                        _retried=True,
+                    )
                 resp.raise_for_status()
-                return await resp.json()
+                if not json_response:
+                    return await resp.text()
+                # content_type= skips aiohttp's strict content-type check -
+                # every REST endpoint of the firmware answers JSON by
+                # definition (only /api/log/download is text).
+                return await resp.json(content_type="application/json")
         except aiohttp.ClientError as err:
             raise HbRfEthConnectionError(str(err)) from err
 
+    async def _get(self, path: str, **kwargs: Any) -> Any:
+        return await self._request("GET", path, **kwargs)
+
     async def _post(self, path: str, payload: dict[str, Any] | None = None) -> Any:
-        if self._token is None:
-            await self.async_login()
-        session = await self._ensure_session()
-        try:
-            async with session.post(
-                f"{self._base}{path}",
-                json=payload or {},
-                headers={"Authorization": f"Token {self._token}"},
-            ) as resp:
-                if resp.status == 401:
-                    self._token = None
-                    await self.async_login()
-                    return await self._post(path, payload)
-                resp.raise_for_status()
-                if resp.content_type == "application/json":
-                    return await resp.json()
-                return None
-        except aiohttp.ClientError as err:
-            raise HbRfEthConnectionError(str(err)) from err
+        return await self._request("POST", path, payload=payload or {})
+
+    # --- Read paths -------------------------------------------------------
 
     async def async_sysinfo(self) -> dict[str, Any]:
         data = await self._get("/sysinfo.json")
@@ -113,5 +146,46 @@ class HbRfEthClient:
     async def async_update_status(self) -> dict[str, Any]:
         return await self._get("/api/update/status")
 
+    async def async_backup(self) -> dict[str, Any]:
+        """Fetch the full settings backup (GET /api/backup).
+
+        The response includes credentials and certificates in clear text -
+        callers must treat the result as a secret and store it accordingly.
+        """
+        return await self._get(
+            "/api/backup", json_response=True, timeout_seconds=TRANSFER_TIMEOUT_SECONDS
+        )
+
+    async def async_download_log(self) -> str:
+        """Fetch the complete captured system log as plain text."""
+        return await self._get(
+            "/api/log/download",
+            json_response=False,
+            timeout_seconds=TRANSFER_TIMEOUT_SECONDS,
+        )
+
+    # --- Write paths ------------------------------------------------------
+
+    async def async_restore(self, backup: dict[str, Any]) -> Any:
+        return await self._post("/api/restore", backup)
+
+    async def async_restart(self) -> Any:
+        return await self._post("/api/restart")
+
+    async def async_update_check(self, channel: str | None = None) -> Any:
+        payload: dict[str, Any] = {}
+        if channel in ("stable", "beta"):
+            payload["channel"] = channel
+        return await self._post("/api/update/check", payload)
+
+    async def async_install(self, target: str) -> Any:
+        """Start the device-side online installation ("firmware"/"webui")."""
+        if target not in ("firmware", "webui"):
+            raise HbRfEthApiError(f"invalid install target: {target}")
+        return await self._post("/api/update/install", {"target": target})
+
     async def async_install_firmware(self) -> Any:
-        return await self._post("/api/update/install", {"target": "firmware"})
+        return await self.async_install("firmware")
+
+    async def async_install_webui(self) -> Any:
+        return await self.async_install("webui")

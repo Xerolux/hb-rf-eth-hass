@@ -7,13 +7,14 @@ from datetime import timedelta
 from typing import Any
 
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
     UpdateFailed,
 )
 
-from .api import HbRfEthApiError, HbRfEthClient
+from .api import HbRfEthApiError, HbRfEthAuthError, HbRfEthClient
 from .const import DOMAIN, POLL_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,6 +34,10 @@ class HbRfEthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         try:
             sysinfo = await self.client.async_sysinfo()
+        except HbRfEthAuthError as err:
+            # Credentials were valid at setup but the device rejects them
+            # now (password changed): hand over to the reauth flow.
+            raise ConfigEntryAuthFailed(str(err)) from err
         except HbRfEthApiError as err:
             raise UpdateFailed(str(err)) from err
         update_status: dict[str, Any] = {}

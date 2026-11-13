@@ -30,6 +30,7 @@ SENSORS = (
         key="uptimeSeconds",
         name="Uptime",
         device_class="duration",
+        native_unit_of_measurement="s",
         state_class="total_increasing",
     ),
     SensorEntityDescription(

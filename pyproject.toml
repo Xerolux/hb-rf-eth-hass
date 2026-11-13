@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hb-rf-eth-hass"
+version = "0.2.0-beta.1"
+description = "Home Assistant integration for the HB-RF-ETH-ng HomeMatic/HmIP Ethernet gateway"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "CC-BY-NC-SA-4.0" }
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "C4", "SIM"]
+extend-select = ["T20"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

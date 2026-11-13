@@ -1,0 +1,57 @@
+backup:
+  name: Create backup
+  description: >-
+    Downloads the full settings backup of the gateway (including
+    credentials and certificates) and stores it as a JSON file in the
+    "hb_rf_eth_backups" folder of your Home Assistant configuration
+    directory. Treat the file as a secret.
+  target:
+    entity: []
+  fields: {}
+restore:
+  name: Restore backup
+  description: >-
+    Restores a settings backup previously created by the backup service.
+    The file must live in the "hb_rf_eth_backups" folder. The device
+    applies most settings without a restart.
+  target:
+    entity: []
+  fields:
+    filename:
+      name: Filename
+      description: File name inside the backup folder (e.g. A1B2C3-20260101-120000.json)
+      required: true
+      example: A1B2C3-20260101-120000.json
+      selector:
+        text: {}
+download_log:
+  name: Download system log
+  description: >-
+    Downloads the complete captured system log of the gateway and stores
+    it as a text file in the "hb_rf_eth_backups" folder. Log capture must
+    be enabled on the device.
+  target:
+    entity: {}
+restart:
+  name: Restart gateway
+  description: Restarts the gateway. The CCU reconnects automatically.
+  target:
+    entity: {}
+update_check:
+  name: Check for updates
+  description: Starts a manual update search on the gateway.
+  target:
+    entity: {}
+  fields:
+    channel:
+      name: Channel
+      description: Release channel to check. Defaults to the configured channel.
+      required: false
+      example: stable
+      selector:
+        select:
+          options:
+            - label: stable
+              value: stable
+            - label: beta
+              value: beta

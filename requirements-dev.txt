@@ -1,0 +1,6 @@
+# Development tools. Version floors mirror the violet-hass toolchain so all
+# Xerolux HA integrations lint and test identically.
+ruff>=0.17.2
+pytest>=9.0.3
+pytest-asyncio>=1.4.0
+pytest-homeassistant-custom-component>=0.13.357

@@ -68,11 +68,22 @@ reauth, diagnostics). Device load stays modest: MQTT publishes its
 status once per minute, the REST coordinator sends three small GETs per
 poll interval (~50 KB heap free with both active on an ESP32 WROOM).
 
-## Installation (HACS)
+## Installation
+
+**Home Assistant 2026.x (built-in Marketplace):**
+
+1. Settings → Add-ons → **Marketplace** → add custom repository
+2. Repository: `Xerolux/hb-rf-eth-hass`, Category: **Integration**
+3. Install **HB-RF-ETH**, restart Home Assistant
+
+**Older Home Assistant with HACS:**
 
 1. HACS → ⋮ → **Custom repositories**
 2. Repository: `Xerolux/hb-rf-eth-hass`, Category: **Integration**
 3. Install **HB-RF-ETH**, restart Home Assistant
+
+**Manual:** copy `custom_components/hb_rf_eth` into the `custom_components`
+folder of your configuration directory and restart Home Assistant.
 
 ## Development
 

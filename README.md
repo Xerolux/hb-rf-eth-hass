@@ -58,6 +58,13 @@ automatically; connection changes (new IP, credentials) use the native
 | Services only | Registers **no entities** — for setups where the gateway already delivers its ~84 entities via the firmware's native MQTT/HA auto-discovery. The integration then only provides its services; duplicates are avoided, the device is not polled redundantly. |
 | Poll interval | REST polling interval, 10–300 s (default 30 s). |
 
+> **„I see no entities in this integration?"** — That is the intended
+> behaviour of *Services only*: the config entry deliberately shows nothing
+> but its services. Your gateway device with **all its entities** lives under
+> **Settings → Devices & Services → MQTT → HB-RF-ETH-…** (search for the
+> hostname). If you prefer the entities here instead, turn *Services only*
+> off — but then they duplicate the MQTT ones.
+
 ### Coexistence with the native MQTT discovery
 
 The firmware offers both paths; the recommended combination is:
@@ -90,15 +97,17 @@ folder of your configuration directory and restart Home Assistant.
 ```bash
 uv venv --python 3.14 .venv
 uv pip install --python .venv/bin/python -r requirements-dev.txt
-.venv/bin/python -m pytest -q tests   # 36 tests against HA 2026.10.4
+.venv/bin/python -m pytest -q tests   # 37 tests against HA 2026.10.4
 .venv/bin/ruff check custom_components tests
 ```
 
 ## Status
 
-**Beta.** Unit-tested against Home Assistant 2026.10.4 (pytest-homeassistant-
-custom-component) and validated live on HA 2026.11.0 against gateway firmware
-2.4.0 (config flow, entities, backup and update-check services). Feedback and
+**Alpha.** Unit-tested against Home Assistant 2026.10.4 (pytest-homeassistant-
+custom-component) and validated live on HA 2026.11.0/2026.11.1 against
+gateway firmware 2.4.1-Alpha.1 — config flow, zeroconf discovery,
+reconfigure, services-only mode, backup and update-check services, including
+a production setup running alongside the native MQTT discovery. Feedback and
 logs welcome in the issues.
 
 ## License

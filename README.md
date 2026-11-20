@@ -100,7 +100,7 @@ picked up by the new version after restart.
 ```bash
 uv venv --python 3.14 .venv
 uv pip install --python .venv/bin/python -r requirements-dev.txt
-.venv/bin/python -m pytest -q tests  
+.venv/bin/python -m pytest -q tests
 .venv/bin/ruff check custom_components tests
 ```
 

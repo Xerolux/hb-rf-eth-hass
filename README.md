@@ -56,7 +56,7 @@ automatically; connection changes (new IP, credentials) use the native
 | Option | Description |
 |---|---|
 | Services only | Registers **no entities** — for setups where the gateway already delivers its ~84 entities via the firmware's native MQTT/HA auto-discovery. The integration then only provides its services; duplicates are avoided, the device is not polled redundantly. |
-| Poll interval | REST polling interval, 10–300 s (default 30 s). |
+| Poll interval | REST polling interval, 10–300 s (default 30 s, when REST entities are enabled). |
 
 > **„I see no entities in this integration?"** — That is the intended
 > behaviour of *Services only*: the config entry deliberately shows nothing
@@ -72,25 +72,28 @@ The firmware offers both paths; the recommended combination is:
 selects, events, update entities — token-gated) **plus this integration
 in services-only mode** (backup/restore, log download, restart,
 reauth, diagnostics). Device load stays modest: MQTT publishes its
-status once per minute, the REST coordinator sends three small GETs per
-poll interval (~50 KB heap free with both active on an ESP32 WROOM).
+status once per minute, the REST coordinator sends sysinfo and update-status GETs per
+poll interval when REST entities are enabled.
 
 ## Installation
 
-**Home Assistant 2026.x (built-in Marketplace):**
+The integration source lives in `custom_components/hb_rf_eth`.
+The published `hb_rf_eth.zip` contains the files for that directory.
 
-1. Settings → Add-ons → **Marketplace** → add custom repository
-2. Repository: `Xerolux/hb-rf-eth-hass`, Category: **Integration**
-3. Install **HB-RF-ETH**, restart Home Assistant
+**Home Assistant Marketplace:** Open **Settings > Marketplace** and use
+**Custom repositories > Add via link** with
+`https://github.com/Xerolux/hb-rf-eth-hass`. Open the integration's listing to
+select and install a version. If your Marketplace does not offer prereleases,
+use the manual ZIP installation below.
 
-**Older Home Assistant with HACS:**
+**HACS:** Add `Xerolux/hb-rf-eth-hass` as a custom repository in the
+**Integration** category, install **HB-RF-ETH**, then restart Home Assistant.
+Enable prerelease versions if you want to install a beta.
 
-1. HACS → ⋮ → **Custom repositories**
-2. Repository: `Xerolux/hb-rf-eth-hass`, Category: **Integration**
-3. Install **HB-RF-ETH**, restart Home Assistant
-
-**Manual:** copy `custom_components/hb_rf_eth` into the `custom_components`
-folder of your configuration directory and restart Home Assistant.
+**Manual:** Extract the release ZIP into
+`<config>/custom_components/hb_rf_eth` so `manifest.json` is directly inside
+that directory, then restart Home Assistant. An existing config entry is
+picked up by the new version after restart.
 
 ## Development
 
@@ -103,12 +106,10 @@ uv pip install --python .venv/bin/python -r requirements-dev.txt
 
 ## Status
 
-**Alpha.** Unit-tested against Home Assistant 2026.10.4 (pytest-homeassistant-
-custom-component) and validated live on HA 2026.11.0/2026.11.1 against
-gateway firmware 2.4.1-Alpha.1 — config flow, zeroconf discovery,
-reconfigure, services-only mode, backup and update-check services, including
-a production setup running alongside the native MQTT discovery. Feedback and
-logs welcome in the issues.
+**Beta.** Version 0.3.0-beta.1 reports unknown firmware and WebUI versions
+until a successful update check. Skipped and failed checks expose their reason
+as an update-entity attribute. Use the firmware MQTT discovery together with
+**Services only** to avoid duplicate entities and periodic REST polling.
 
 ## License
 

@@ -100,13 +100,13 @@ picked up by the new version after restart.
 ```bash
 uv venv --python 3.14 .venv
 uv pip install --python .venv/bin/python -r requirements-dev.txt
-.venv/bin/python -m pytest -q tests   # 37 tests against HA 2026.10.4
+.venv/bin/python -m pytest -q tests
 .venv/bin/ruff check custom_components tests
 ```
 
 ## Status
 
-**Beta.** Version 0.3.0-beta.1 reports unknown firmware and WebUI versions
+**Stable release.** Version 0.3.0 reports unknown firmware and WebUI versions
 until a successful update check. Skipped and failed checks expose their reason
 as an update-entity attribute. Use the firmware MQTT discovery together with
 **Services only** to avoid duplicate entities and periodic REST polling.

@@ -80,6 +80,12 @@ poll interval when REST entities are enabled.
 The integration source lives in `custom_components/hb_rf_eth`.
 The published `hb_rf_eth.zip` contains the files for that directory.
 
+**Home Assistant Marketplace:** Open **Settings > Marketplace** and use
+**Custom repositories > Add via link** with
+`https://github.com/Xerolux/hb-rf-eth-hass`. Open the integration's listing to
+select and install a version. If your Marketplace does not offer prereleases,
+use the manual ZIP installation below.
+
 **HACS:** Add `Xerolux/hb-rf-eth-hass` as a custom repository in the
 **Integration** category, install **HB-RF-ETH**, then restart Home Assistant.
 Enable prerelease versions if you want to install a beta.

@@ -69,7 +69,10 @@ class HbRfEthUpdateEntity(HbRfEthEntity, UpdateEntity):
         if update.get("lastError"):
             return {"update_check_status": "failed", "update_check_reason": update["lastError"]}
         if update.get("lastSkipReason"):
-            return {"update_check_status": "skipped", "update_check_reason": update["lastSkipReason"]}
+            return {
+                "update_check_status": "skipped",
+                "update_check_reason": update["lastSkipReason"],
+            }
         return {"update_check_status": "checked" if update.get("everChecked") else "not_checked"}
 
     @property

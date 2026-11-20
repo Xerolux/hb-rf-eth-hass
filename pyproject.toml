@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hb-rf-eth-hass"
-version = "0.3.0-alpha.1"
+version = "0.3.0-beta.1"
 description = "Home Assistant integration for the HB-RF-ETH-ng HomeMatic/HmIP Ethernet gateway"
 readme = "README.md"
 requires-python = ">=3.12"

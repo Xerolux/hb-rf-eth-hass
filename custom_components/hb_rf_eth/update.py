@@ -57,10 +57,20 @@ class HbRfEthUpdateEntity(HbRfEthEntity, UpdateEntity):
     def latest_version(self) -> str | None:
         update = self.coordinator.data.get("update", {})
         key = "latestFirmware" if self._target == "firmware" else "latestWebui"
-        # Before the first search nothing is known: mirror the installed
-        # version so the entity reads "up to date" instead of unavailable.
-        latest = update.get(key) or ""
-        return latest or self.installed_version
+        if update.get("lastError") or update.get("lastSkipReason"):
+            return None
+        return update.get(key) or None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        update = self.coordinator.data.get("update", {})
+        if not update:
+            return {"update_check_status": "unavailable"}
+        if update.get("lastError"):
+            return {"update_check_status": "failed", "update_check_reason": update["lastError"]}
+        if update.get("lastSkipReason"):
+            return {"update_check_status": "skipped", "update_check_reason": update["lastSkipReason"]}
+        return {"update_check_status": "checked" if update.get("everChecked") else "not_checked"}
 
     @property
     def release_url(self) -> str | None:

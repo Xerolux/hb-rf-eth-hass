@@ -60,7 +60,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION=$(python -c "import json;print(json.load(open('custom_components/hb_rf_eth/manifest.json'))['version'])")
-          gh release create "v${VERSION}" \
+          args=()
+          if [[ "$VERSION" == *-* ]]; then
+            args+=(--prerelease)
+          fi
+          gh release create "v${VERSION}" "${args[@]}" \
             --title "HB-RF-ETH integration v${VERSION}" \
             --generate-notes \
             hb_rf_eth.zip hb_rf_eth.zip.sha256

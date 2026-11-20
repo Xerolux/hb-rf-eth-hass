@@ -44,7 +44,7 @@ async def test_webui_update_entity_state(hass, config_entry):
     assert state.attributes["latest_version"] == "1.0.0"
 
 
-async def test_latest_falls_back_to_installed_before_first_search(
+async def test_latest_is_unknown_before_first_search(
     hass, aioclient_mock, config_entry
 ):
     from .conftest import LOGIN_RESPONSE, SYSINFO_RESPONSE, UPDATE_STATUS_RESPONSE
@@ -65,7 +65,31 @@ async def test_latest_falls_back_to_installed_before_first_search(
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
     state = await _firmware_state(hass)
-    assert state.attributes["latest_version"] == "2.4.0"
+    assert state.attributes.get("latest_version") is None
+    assert state.attributes["update_check_status"] == "not_checked"
+
+
+@pytest.mark.parametrize(
+    ("field", "expected"), [("lastError", "failed"), ("lastSkipReason", "skipped")]
+)
+async def test_unsuccessful_check_does_not_mark_entity_up_to_date(
+    hass, aioclient_mock, config_entry, field, expected
+):
+    from .conftest import LOGIN_RESPONSE, SYSINFO_RESPONSE, UPDATE_STATUS_RESPONSE
+
+    aioclient_mock.clear_requests()
+    aioclient_mock.post(f"http://{HOST}/login.json", json=LOGIN_RESPONSE)
+    aioclient_mock.get(f"http://{HOST}/sysinfo.json", json=SYSINFO_RESPONSE)
+    aioclient_mock.get(
+        f"http://{HOST}/api/update/status",
+        json={**UPDATE_STATUS_RESPONSE, field: "test reason"},
+    )
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    state = await _firmware_state(hass)
+    assert state.attributes.get("latest_version") is None
+    assert state.attributes["update_check_status"] == expected
+    assert state.attributes["update_check_reason"] == "test reason"
 
 
 async def test_install_posts_target(hass, aioclient_mock, config_entry):

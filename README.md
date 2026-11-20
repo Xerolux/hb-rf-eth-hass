@@ -95,6 +95,12 @@ Enable prerelease versions if you want to install a beta.
 that directory, then restart Home Assistant. An existing config entry is
 picked up by the new version after restart.
 
+## Changelog
+
+See the [versioned release notes](docs/release-notes) for upgrade information,
+improvements, fixes and links to the full GitHub comparison. Add a curated
+`docs/release-notes/<version>.md` before tagging a release.
+
 ## Development
 
 ```bash

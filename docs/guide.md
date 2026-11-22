@@ -1,6 +1,6 @@
 # HB-RF-ETH in Home Assistant
 
-[Deutsch](guide.de.md) · [Project README](../README.md)
+[Deutsch](guide.de.md) · [Project README](../README.md) · [Support the project](../README.md#support-the-project)
 
 ## Install and connect
 

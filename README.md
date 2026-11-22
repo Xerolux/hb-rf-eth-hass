@@ -126,6 +126,15 @@ until a successful update check. Skipped and failed checks expose their reason
 as an update-entity attribute. Use the firmware MQTT discovery together with
 **Services only** to avoid duplicate entities and periodic REST polling.
 
+## Support the project
+
+[GitHub Sponsors](https://github.com/sponsors/xerolux) ·
+[Patreon](https://www.patreon.com/Xerolux) ·
+[Ko-fi](https://ko-fi.com/xerolux) ·
+[Buy Me a Coffee](https://buymeacoffee.com/xerolux) ·
+[PayPal](https://paypal.me/xerolux) ·
+[Tesla referral](https://ts.la/sebastian564489)
+
 ## License
 
 MIT — see [LICENSE](LICENSE). The gateway firmware itself is licensed

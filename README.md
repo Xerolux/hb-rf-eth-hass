@@ -1,5 +1,7 @@
 # HB-RF-ETH Home Assistant Integration
 
+[English guide](docs/guide.md) · [Deutsche Anleitung](docs/guide.de.md)
+
 Custom integration for the [HB-RF-ETH-ng](https://github.com/Xerolux/HB-RF-ETH-ng)
 HomeMatic/HmIP Ethernet gateway. Adds the gateway as a device with
 connectivity, load, firmware and update entities — including one-click update
@@ -46,18 +48,21 @@ Backups contain secrets — treat the backup folder accordingly.
 
 Settings → Devices & Services → Add Integration → **HB-RF-ETH**
 
-Gateways with firmware **2.4.0 or newer** (built from the stage-1/2 MQTT
-branch) are **discovered automatically** via mDNS (`_hb-rf-eth._tcp`) —
-you only enter the WebUI credentials. Manual setup with a host/IP works
-for older firmware. A changed device password triggers a reauth prompt
-automatically; connection changes (new IP, credentials) use the native
-**Reconfigure** action on the config entry.
+Gateways with firmware **2.4.0 or newer** can be discovered via mDNS
+(`_hb-rf-eth._tcp`). Confirm the discovery and enter the gateway's WebUI
+credentials. For manual setup, use an IP address or hostname such as
+`hb-rf-eth-xxxxxx.local`.
+
+Use **Reconfigure** after an IP or hostname change. The integration keeps
+the existing device and entity IDs. Leave the password field blank to
+keep the saved password. If the gateway rejects the saved credentials,
+Home Assistant prompts for reauthentication.
 
 ### Options (Configure on the config entry)
 
 | Option | Description |
 |---|---|
-| Services only | Registers **no entities** — for setups where the gateway already delivers its ~84 entities via the firmware's native MQTT/HA auto-discovery. The integration then only provides its services; duplicates are avoided, the device is not polled redundantly. |
+| Services only | Registers **no entities** — for setups where the gateway already delivers its entities via the firmware's native MQTT/HA auto-discovery. The integration then only provides its services; duplicates are avoided, the device is not polled redundantly. |
 | Poll interval | REST polling interval, 10–300 s (default 30 s, when REST entities are enabled). |
 
 > **„I see no entities in this integration?"** — That is the intended
@@ -79,10 +84,12 @@ poll interval when REST entities are enabled.
 
 ## Installation
 
+Requires Home Assistant **2026.10.0 or later** and gateway firmware **2.4.0 or later**.
+
 The integration source lives in `custom_components/hb_rf_eth`.
 The published `hb_rf_eth.zip` contains the files for that directory.
 
-**Home Assistant Marketplace:** Open **Settings > Marketplace** and use
+**Home Assistant Marketplace (if available):** Open **Settings > Marketplace** and use
 **Custom repositories > Add via link** with
 `https://github.com/Xerolux/hb-rf-eth-hass`. Open the integration's listing to
 select and install a version. If your Marketplace does not offer prereleases,

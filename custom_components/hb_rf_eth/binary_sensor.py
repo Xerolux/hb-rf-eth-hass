@@ -16,13 +16,13 @@ from .coordinator import HbRfEthCoordinator, HbRfEthEntity, services_only
 SENSORS = (
     BinarySensorEntityDescription(
         key="ethernet_connected",
-        name="Ethernet",
+        translation_key="ethernet",
         device_class="connectivity",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     BinarySensorEntityDescription(
         key="ccu_connected",
-        name="CCU Relay",
+        translation_key="ccu_relay",
         device_class="connectivity",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -41,10 +41,12 @@ async def async_setup_entry(
 
 
 class HbRfEthBinarySensor(HbRfEthEntity, BinarySensorEntity):
+    _attr_has_entity_name = True
+
     def __init__(self, coordinator: HbRfEthCoordinator, description) -> None:
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.host}-{description.key}"
+        self._attr_unique_id = f"{coordinator.original_host}-{description.key}"
 
     @property
     def is_on(self) -> bool | None:

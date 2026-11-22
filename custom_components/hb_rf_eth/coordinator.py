@@ -30,6 +30,7 @@ class HbRfEthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         poll_interval: int = DEFAULT_POLL_INTERVAL_SECONDS,
         *,
         config_entry: ConfigEntry,
+        original_host: str,
     ) -> None:
         super().__init__(
             hass,
@@ -41,6 +42,7 @@ class HbRfEthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.client = client
         self.host = host
+        self.original_host = original_host
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
@@ -69,7 +71,7 @@ class HbRfEthEntity(CoordinatorEntity[HbRfEthCoordinator]):
     def device_info(self) -> dict[str, Any]:
         info = self.coordinator.data.get("sysinfo", {})
         return {
-            "identifiers": {(DOMAIN, self.coordinator.host)},
+            "identifiers": {(DOMAIN, self.coordinator.original_host)},
             "name": info.get("hostname", self.coordinator.host),
             "manufacturer": "Xerolux",
             "model": "HB-RF-ETH-ng",

@@ -13,6 +13,7 @@ MAX_POLL_INTERVAL_SECONDS = 300
 # then provides only its services (backup/restore/log/restart/update check)
 # and registers no entities, avoiding duplicates.
 CONF_SERVICES_ONLY = "services_only"
+CONF_ORIGINAL_HOST = "original_host"
 CONF_POLL_INTERVAL = "poll_interval"
 
 DEFAULT_OPTIONS = {

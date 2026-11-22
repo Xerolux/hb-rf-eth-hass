@@ -10,23 +10,26 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, TextSelectorType
 
 from .api import HbRfEthApiError, HbRfEthAuthError, HbRfEthClient
-from .const import DEFAULT_USERNAME, DOMAIN
+from .const import CONF_ORIGINAL_HOST, DEFAULT_USERNAME, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+
+PASSWORD_SELECTOR = TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD))
 
 STEP_USER_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
         vol.Required(CONF_USERNAME, default=DEFAULT_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
     }
 )
 
 STEP_REAUTH_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
     }
 )
 
@@ -89,7 +92,7 @@ class HbRfEthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Required(CONF_HOST, default=self._discovered_host): str,
                 vol.Required(CONF_USERNAME, default=DEFAULT_USERNAME): str,
-                vol.Required(CONF_PASSWORD): str,
+                vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
             }
         )
 
@@ -146,7 +149,7 @@ class HbRfEthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_USERNAME, default=DEFAULT_USERNAME): str,
-                    vol.Required(CONF_PASSWORD): str,
+                    vol.Required(CONF_PASSWORD): PASSWORD_SELECTOR,
                 }
             ),
             description_placeholders={
@@ -162,6 +165,9 @@ class HbRfEthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         reconfigure_entry = self._get_reconfigure_entry()
         if user_input is not None:
             data = {**reconfigure_entry.data, **user_input}
+            if not user_input.get(CONF_PASSWORD):
+                data[CONF_PASSWORD] = reconfigure_entry.data[CONF_PASSWORD]
+            data.setdefault(CONF_ORIGINAL_HOST, reconfigure_entry.data[CONF_HOST])
             client = _make_client(self.hass, data)
             try:
                 sysinfo = await _probe(client)
@@ -172,6 +178,11 @@ class HbRfEthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             else:
                 serial = sysinfo.get("serial")
                 if serial:
+                    if (
+                        reconfigure_entry.unique_id
+                        not in (None, data[CONF_ORIGINAL_HOST], serial)
+                    ):
+                        return self.async_abort(reason="wrong_gateway")
                     await self.async_set_unique_id(serial)
                     # Abort only when a DIFFERENT entry claims this gateway;
                     # the entry being reconfigured obviously may keep it.
@@ -198,7 +209,7 @@ class HbRfEthConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(
                         CONF_USERNAME, default=current.get(CONF_USERNAME, DEFAULT_USERNAME)
                     ): str,
-                    vol.Required(CONF_PASSWORD, default=current.get(CONF_PASSWORD, "")): str,
+                    vol.Optional(CONF_PASSWORD): PASSWORD_SELECTOR,
                 }
             ),
             errors=errors,

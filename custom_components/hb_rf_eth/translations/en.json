@@ -22,6 +22,9 @@
           "host": "Host",
           "username": "Username",
           "password": "Password"
+        },
+        "data_description": {
+          "password": "Leave blank to keep the saved password."
         }
       },
       "reauth_confirm": {
@@ -33,11 +36,13 @@
     },
     "error": {
       "cannot_connect": "Failed to connect",
-      "invalid_auth": "Invalid authentication",
-      "invalid_interval": "Poll interval must be between 10 and 300 seconds"
+      "invalid_auth": "Invalid authentication"
     },
     "abort": {
-      "already_configured": "This gateway is already configured"
+      "already_configured": "This gateway is already configured",
+      "wrong_gateway": "A different gateway responded at this address.",
+      "reauth_successful": "Credentials updated.",
+      "reconfigure_successful": "Connection settings updated."
     }
   },
   "options": {
@@ -60,7 +65,13 @@
     },
     "restore": {
       "name": "Restore backup",
-      "description": "Restores a settings backup previously created by the backup service."
+      "description": "Restores a settings backup previously created by the backup service.",
+      "fields": {
+        "filename": {
+          "name": "Filename",
+          "description": "Name of the JSON file in the hb_rf_eth_backups folder."
+        }
+      }
     },
     "download_log": {
       "name": "Download system log",
@@ -72,7 +83,51 @@
     },
     "update_check": {
       "name": "Check for updates",
-      "description": "Starts a manual update search on the gateway."
+      "description": "Starts a manual update search on the gateway.",
+      "fields": {
+        "channel": {
+          "name": "Release channel",
+          "description": "Omit to use the channel configured on the gateway."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cpu_usage": {
+        "name": "CPU usage"
+      },
+      "memory_usage": {
+        "name": "Memory usage"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "firmware_version": {
+        "name": "Firmware version"
+      },
+      "latest_firmware": {
+        "name": "Latest firmware"
+      }
+    },
+    "binary_sensor": {
+      "ethernet": {
+        "name": "Ethernet"
+      },
+      "ccu_relay": {
+        "name": "CCU relay"
+      }
+    }
+  },
+  "exceptions": {
+    "no_target": {
+      "message": "Select exactly one loaded HB-RF-ETH gateway."
+    },
+    "invalid_filename": {
+      "message": "Enter a JSON filename without a path."
+    },
+    "file_not_found": {
+      "message": "The backup file was not found."
     }
   }
 }

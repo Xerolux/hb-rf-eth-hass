@@ -5,6 +5,7 @@ from __future__ import annotations
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers import entity_registry as er
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hb_rf_eth.const import (
@@ -74,6 +75,10 @@ async def test_reconfigure_updates_host(hass, aioclient_mock, config_entry):
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 
+    registry = er.async_get(hass)
+    old_entity = registry.async_get_entity_id("update", DOMAIN, f"{HOST}-firmware-update")
+    assert old_entity is not None
+
     # New IP, same credentials.
     _mock_ok(aioclient_mock, "10.0.0.99")
     result = await config_entry.start_reconfigure_flow(hass)
@@ -82,18 +87,36 @@ async def test_reconfigure_updates_host(hass, aioclient_mock, config_entry):
 
     result = await hass.config_entries.flow.async_configure(
         result["flow_id"],
-        {CONF_HOST: "10.0.0.99", CONF_USERNAME: "admin", CONF_PASSWORD: "pw"},
+        {CONF_HOST: "10.0.0.99", CONF_USERNAME: "admin"},
     )
     await hass.async_block_till_done()
 
     assert result["type"] == FlowResultType.ABORT
     assert result["reason"] == "reconfigure_successful"
     assert config_entry.data[CONF_HOST] == "10.0.0.99"
+    assert config_entry.data[CONF_PASSWORD] == "pw"
+    assert registry.async_get_entity_id("update", DOMAIN, f"{HOST}-firmware-update") == old_entity
+    assert registry.async_get_entity_id("update", DOMAIN, "10.0.0.99-firmware-update") is None
+    assert hass.states.get(old_entity).state != "unavailable"
+
+
+async def test_reconfigure_rejects_different_gateway(hass, aioclient_mock, config_entry):
+    host = "10.0.0.99"
+    aioclient_mock.post(f"http://{host}/login.json", json=LOGIN_RESPONSE)
+    other_gateway = {"sysInfo": {**SYSINFO_RESPONSE["sysInfo"], "serial": "OTHER"}}
+    aioclient_mock.get(f"http://{host}/sysinfo.json", json=other_gateway)
+
+    result = await config_entry.start_reconfigure_flow(hass)
+    result = await hass.config_entries.flow.async_configure(
+        result["flow_id"], {CONF_HOST: host, CONF_USERNAME: "admin"}
+    )
+
+    assert result["type"] == FlowResultType.ABORT
+    assert result["reason"] == "wrong_gateway"
+    assert config_entry.data[CONF_HOST] == HOST
 
 
 async def test_options_services_only_drops_entities(hass, aioclient_mock, config_entry):
-    from homeassistant.helpers import entity_registry as er
-
     assert await hass.config_entries.async_setup(config_entry.entry_id)
     await hass.async_block_till_done()
 

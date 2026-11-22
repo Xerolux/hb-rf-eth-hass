@@ -22,6 +22,9 @@
           "host": "Host",
           "username": "Benutzername",
           "password": "Passwort"
+        },
+        "data_description": {
+          "password": "Leer lassen, um das gespeicherte Passwort beizubehalten."
         }
       },
       "reauth_confirm": {
@@ -33,11 +36,13 @@
     },
     "error": {
       "cannot_connect": "Verbindung fehlgeschlagen",
-      "invalid_auth": "Ungültige Anmeldung",
-      "invalid_interval": "Abfrageintervall muss zwischen 10 und 300 Sekunden liegen"
+      "invalid_auth": "Ungültige Anmeldung"
     },
     "abort": {
-      "already_configured": "Dieses Gateway ist bereits eingerichtet"
+      "already_configured": "Dieses Gateway ist bereits eingerichtet",
+      "wrong_gateway": "An dieser Adresse antwortet ein anderes Gateway.",
+      "reauth_successful": "Zugangsdaten aktualisiert.",
+      "reconfigure_successful": "Verbindungseinstellungen aktualisiert."
     }
   },
   "options": {
@@ -60,7 +65,13 @@
     },
     "restore": {
       "name": "Backup wiederherstellen",
-      "description": "Stellt ein zuvor mit dem Backup-Dienst erzeugtes Einstellungs-Backup wieder her."
+      "description": "Stellt ein zuvor mit dem Backup-Dienst erzeugtes Einstellungs-Backup wieder her.",
+      "fields": {
+        "filename": {
+          "name": "Dateiname",
+          "description": "Name der JSON-Datei im Ordner hb_rf_eth_backups."
+        }
+      }
     },
     "download_log": {
       "name": "Systemlog herunterladen",
@@ -72,7 +83,51 @@
     },
     "update_check": {
       "name": "Nach Updates suchen",
-      "description": "Startet eine manuelle Update-Suche auf dem Gateway."
+      "description": "Startet eine manuelle Update-Suche auf dem Gateway.",
+      "fields": {
+        "channel": {
+          "name": "Update-Kanal",
+          "description": "Ohne Auswahl wird der am Gateway eingestellte Kanal verwendet."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "cpu_usage": {
+        "name": "CPU-Auslastung"
+      },
+      "memory_usage": {
+        "name": "Speicherauslastung"
+      },
+      "uptime": {
+        "name": "Laufzeit"
+      },
+      "firmware_version": {
+        "name": "Firmware-Version"
+      },
+      "latest_firmware": {
+        "name": "Neueste Firmware"
+      }
+    },
+    "binary_sensor": {
+      "ethernet": {
+        "name": "Ethernet"
+      },
+      "ccu_relay": {
+        "name": "CCU-Verbindung"
+      }
+    }
+  },
+  "exceptions": {
+    "no_target": {
+      "message": "Wähle genau ein geladenes HB-RF-ETH-Gateway aus."
+    },
+    "invalid_filename": {
+      "message": "Gib einen JSON-Dateinamen ohne Pfad an."
+    },
+    "file_not_found": {
+      "message": "Die Backup-Datei wurde nicht gefunden."
     }
   }
 }

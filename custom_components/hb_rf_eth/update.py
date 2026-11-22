@@ -43,7 +43,7 @@ class HbRfEthUpdateEntity(HbRfEthEntity, UpdateEntity):
     def __init__(self, coordinator: HbRfEthCoordinator, target: str) -> None:
         super().__init__(coordinator)
         self._target = target
-        self._attr_unique_id = f"{coordinator.host}-{target}-update"
+        self._attr_unique_id = f"{coordinator.original_host}-{target}-update"
         self._attr_title = "HB-RF-ETH Firmware" if target == "firmware" else "HB-RF-ETH WebUI"
 
     # Installed/latest -----------------------------------------------------

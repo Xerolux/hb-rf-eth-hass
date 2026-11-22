@@ -16,21 +16,21 @@ from .coordinator import HbRfEthCoordinator, HbRfEthEntity, services_only
 SENSORS = (
     SensorEntityDescription(
         key="cpuUsage",
-        name="CPU Usage",
+        translation_key="cpu_usage",
         native_unit_of_measurement=PERCENTAGE,
         state_class="measurement",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="memoryUsage",
-        name="Memory Usage",
+        translation_key="memory_usage",
         native_unit_of_measurement=PERCENTAGE,
         state_class="measurement",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="uptimeSeconds",
-        name="Uptime",
+        translation_key="uptime",
         device_class="duration",
         native_unit_of_measurement="s",
         state_class="total_increasing",
@@ -38,12 +38,12 @@ SENSORS = (
     ),
     SensorEntityDescription(
         key="currentVersion",
-        name="Firmware Version",
+        translation_key="firmware_version",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
     SensorEntityDescription(
         key="latestVersion",
-        name="Latest Firmware",
+        translation_key="latest_firmware",
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
@@ -61,15 +61,19 @@ async def async_setup_entry(
 
 
 class HbRfEthSensor(HbRfEthEntity, SensorEntity):
+    _attr_has_entity_name = True
+
     def __init__(self, coordinator: HbRfEthCoordinator, description) -> None:
         super().__init__(coordinator)
         self.entity_description = description
-        self._attr_unique_id = f"{coordinator.host}-{description.key}"
+        self._attr_unique_id = f"{coordinator.original_host}-{description.key}"
 
     @property
     def native_value(self) -> str | float | None:
         data = self.coordinator.data
         if self.entity_description.key == "latestVersion":
-            latest = data.get("update", {}).get("latestFirmware", "")
-            return latest or None
+            update = data.get("update", {})
+            if update.get("lastError") or update.get("lastSkipReason"):
+                return None
+            return update.get("latestFirmware") or None
         return data.get("sysinfo", {}).get(self.entity_description.key)

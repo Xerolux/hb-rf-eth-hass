@@ -123,7 +123,7 @@ uv pip install --python .venv/bin/python -r requirements-dev.txt
 
 ## Status
 
-**Stable release.** Version 0.3.0 reports unknown firmware and WebUI versions
+**Stable release.** Version 0.3.1 reports unknown firmware and WebUI versions
 until a successful update check. Skipped and failed checks expose their reason
 as an update-entity attribute. Use the firmware MQTT discovery together with
 **Services only** to avoid duplicate entities and periodic REST polling.

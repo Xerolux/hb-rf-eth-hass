@@ -35,7 +35,7 @@ def _make_client(hass, data: dict[str, Any], password: str | None = None) -> HbR
     return HbRfEthClient(
         data[CONF_HOST],
         data.get(CONF_USERNAME, DEFAULT_USERNAME),
-        password or data[CONF_PASSWORD],
+        data[CONF_PASSWORD] if password is None else password,
         session=async_get_clientsession(hass),
     )
 

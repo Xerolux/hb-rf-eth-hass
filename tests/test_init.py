@@ -134,7 +134,7 @@ async def test_download_log_service(hass, aioclient_mock, config_entry):
     await hass.async_block_till_done()
 
     aioclient_mock.get(
-        f"http://{HOST}/api/log/download", text="logline"
+        f"http://{HOST}/api/log/download", text="Tür geöffnet"
     )
     response = await hass.services.async_call(
         DOMAIN,
@@ -143,9 +143,9 @@ async def test_download_log_service(hass, aioclient_mock, config_entry):
         blocking=True,
         return_response=True,
     )
-    assert response["bytes"] == len("logline")
+    assert response["bytes"] == len("Tür geöffnet".encode())
     path = Path(hass.config.path("hb_rf_eth_backups")) / response["filename"]
-    assert path.read_text(encoding="utf-8") == "logline"
+    assert path.read_text(encoding="utf-8") == "Tür geöffnet"
 
 
 async def test_restart_service(hass, aioclient_mock, config_entry):
@@ -199,13 +199,9 @@ async def test_service_requires_target_with_multiple_gateways(
     assert await hass.config_entries.async_setup(entry2.entry_id)
     await hass.async_block_till_done()
 
-    with pytest.raises(ServiceValidationError):
-        await hass.services.async_call(
-            DOMAIN,
-            "restart",
-            {"device_id": "no-such-device"},
-            blocking=True,
-        )
+    for target in ({}, {"device_id": [_device_id(hass, config_entry), _device_id(hass, entry2)]}):
+        with pytest.raises(ServiceValidationError):
+            await hass.services.async_call(DOMAIN, "restart", target, blocking=True)
 
 
 async def test_service_target_optional_with_single_gateway(
@@ -224,3 +220,18 @@ async def test_service_target_optional_with_single_gateway(
         return_response=True,
     )
     assert response == {"accepted": True, "channel": "configured"}
+
+
+async def test_invalid_explicit_target_does_not_restart_single_gateway(
+    hass, aioclient_mock, config_entry
+):
+    assert await hass.config_entries.async_setup(config_entry.entry_id)
+    await hass.async_block_till_done()
+    aioclient_mock.post(f"http://{HOST}/api/restart", json={"success": True})
+
+    with pytest.raises(ServiceValidationError):
+        await hass.services.async_call(
+            DOMAIN, "restart", {"device_id": "no-such-device"}, blocking=True
+        )
+
+    assert not any(str(call[1]).endswith("/api/restart") for call in aioclient_mock.mock_calls)

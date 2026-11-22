@@ -6,6 +6,7 @@ import logging
 from datetime import timedelta
 from typing import Any
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import (
@@ -27,12 +28,16 @@ class HbRfEthCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         client: HbRfEthClient,
         host: str,
         poll_interval: int = DEFAULT_POLL_INTERVAL_SECONDS,
+        *,
+        config_entry: ConfigEntry,
     ) -> None:
         super().__init__(
             hass,
             _LOGGER,
+            config_entry=config_entry,
             name=f"{DOMAIN} {host}",
             update_interval=timedelta(seconds=poll_interval),
+            always_update=False,
         )
         self.client = client
         self.host = host

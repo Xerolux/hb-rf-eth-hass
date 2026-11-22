@@ -6,12 +6,9 @@ to carry ``Authorization: Token <token>`` (not Bearer). Tokens survive reboots.
 
 from __future__ import annotations
 
-import logging
 from typing import Any
 
 import aiohttp
-
-_LOGGER = logging.getLogger(__name__)
 
 # Update installation is asynchronous on the device: POST /api/update/install
 # returns immediately and progress arrives via GET /api/update/status
@@ -78,14 +75,25 @@ class HbRfEthClient:
                 if resp.status == 401:
                     raise HbRfEthAuthError("invalid credentials")
                 resp.raise_for_status()
-                data = await resp.json()
-        except aiohttp.ClientError as err:
+                data = await self._json_object(resp)
+        except (aiohttp.ClientError, TimeoutError) as err:
             raise HbRfEthConnectionError(str(err)) from err
         token = data.get("token")
-        if not token:
+        if not isinstance(token, str) or not token:
             raise HbRfEthAuthError("device did not return a token")
         self._token = token
         return token
+
+    @staticmethod
+    async def _json_object(response: aiohttp.ClientResponse) -> dict[str, Any]:
+        """Decode device JSON regardless of its HTTP content type."""
+        try:
+            data = await response.json(content_type=None)
+        except ValueError as err:
+            raise HbRfEthApiError("device returned invalid JSON") from err
+        if not isinstance(data, dict):
+            raise HbRfEthApiError("device did not return a JSON object")
+        return data
 
     async def _request(
         self,
@@ -97,39 +105,37 @@ class HbRfEthClient:
         timeout_seconds: int = REQUEST_TIMEOUT_SECONDS,
         _retried: bool = False,
     ) -> Any:
-        if self._token is None:
-            await self.async_login()
+        token = self._token if self._token is not None else await self.async_login()
         session = await self._ensure_session()
         try:
             async with session.request(
                 method,
                 f"{self._base}{path}",
                 json=payload,
-                headers={"Authorization": f"Token {self._token}"},
+                headers={"Authorization": f"Token {token}"},
                 timeout=aiohttp.ClientTimeout(total=timeout_seconds),
             ) as resp:
-                if resp.status == 401 and not _retried:
-                    # Token rejected (device restarted with a new one): retry
-                    # exactly once with a fresh login.
-                    self._token = None
-                    await self.async_login()
-                    return await self._request(
-                        method,
-                        path,
-                        payload=payload,
-                        json_response=json_response,
-                        timeout_seconds=timeout_seconds,
-                        _retried=True,
-                    )
-                resp.raise_for_status()
-                if not json_response:
-                    return await resp.text()
-                # content_type= skips aiohttp's strict content-type check -
-                # every REST endpoint of the firmware answers JSON by
-                # definition (only /api/log/download is text).
-                return await resp.json(content_type="application/json")
-        except aiohttp.ClientError as err:
+                if resp.status != 401:
+                    resp.raise_for_status()
+                    if not json_response:
+                        return await resp.text()
+                    return await self._json_object(resp)
+        except (aiohttp.ClientError, TimeoutError) as err:
             raise HbRfEthConnectionError(str(err)) from err
+
+        # Release the rejected response before opening another request.
+        if self._token == token:
+            self._token = None
+        if _retried:
+            raise HbRfEthAuthError("device rejected the refreshed token")
+        return await self._request(
+            method,
+            path,
+            payload=payload,
+            json_response=json_response,
+            timeout_seconds=timeout_seconds,
+            _retried=True,
+        )
 
     async def _get(self, path: str, **kwargs: Any) -> Any:
         return await self._request("GET", path, **kwargs)
@@ -141,7 +147,10 @@ class HbRfEthClient:
 
     async def async_sysinfo(self) -> dict[str, Any]:
         data = await self._get("/sysinfo.json")
-        return data.get("sysInfo", {})
+        sysinfo = data.get("sysInfo")
+        if not isinstance(sysinfo, dict):
+            raise HbRfEthApiError("device did not return sysInfo")
+        return sysinfo
 
     async def async_update_status(self) -> dict[str, Any]:
         return await self._get("/api/update/status")

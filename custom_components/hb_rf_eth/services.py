@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -76,7 +77,11 @@ async def _client_from_call(
         for entry_id in await async_extract_config_entry_ids(call)
         if (data := hass.data.get(DOMAIN, {}).get(entry_id)) and "client" in data
     ]
-    if not entry_ids:
+    has_target = any(
+        key in call.data
+        for key in ("entity_id", "device_id", "area_id", "floor_id", "label_id")
+    )
+    if not entry_ids and not has_target:
         # Services-only mode registers no entities, so there is nothing to
         # target. With exactly one configured gateway the target is optional.
         configured = [
@@ -86,9 +91,9 @@ async def _client_from_call(
         ]
         if len(configured) == 1:
             entry_ids = configured
-    if not entry_ids:
+    if len(entry_ids) != 1:
         raise ServiceValidationError(
-            "no HB-RF-ETH device matched the service target",
+            "the action requires exactly one loaded HB-RF-ETH gateway",
             translation_domain=DOMAIN,
             translation_key="no_target",
         )
@@ -108,7 +113,7 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             backup = await client.async_backup()
         except HbRfEthApiError as err:
             raise ServiceValidationError(str(err)) from err
-        stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
+        stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
         # The device backup JSON is flat and carries no serial; take it from
         # the coordinator's sysinfo (with the hostname as fallback).
         sysinfo = hass.data[DOMAIN][entry.entry_id]["coordinator"].data.get(
@@ -117,7 +122,9 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         serial = str(
             sysinfo.get("serial") or sysinfo.get("hostname") or "device"
         )
-        target = _backup_dir(hass) / f"{serial}-{stamp}.json"
+        serial = re.sub(r"[^a-zA-Z0-9_.-]", "_", serial)
+        directory = await hass.async_add_executor_job(_backup_dir, hass)
+        target = directory / f"{serial}-{stamp}.json"
         await hass.async_add_executor_job(_write_json, target, backup)
         _LOGGER.info("Backup written to %s", target)
         return {"filename": target.name, "path": str(target)}
@@ -125,7 +132,8 @@ async def async_setup_services(hass: HomeAssistant) -> None:
     async def handle_restore(call: ServiceCall) -> ServiceResponse:
         _entry, client = await _client_from_call(hass, call)
         name = _safe_backup_name(call.data["filename"])
-        path = _backup_dir(hass) / name
+        directory = await hass.async_add_executor_job(_backup_dir, hass)
+        path = directory / name
         if not await hass.async_add_executor_job(path.is_file):
             raise ServiceValidationError(
                 f"backup file not found: {name}",
@@ -146,11 +154,12 @@ async def async_setup_services(hass: HomeAssistant) -> None:
             log = await client.async_download_log()
         except HbRfEthApiError as err:
             raise ServiceValidationError(str(err)) from err
-        stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
-        serial = entry.data.get("host", "device")
-        target = _backup_dir(hass) / f"{serial}-log-{stamp}.txt"
+        stamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S-%f")
+        host = re.sub(r"[^a-zA-Z0-9_.-]", "_", entry.data.get("host", "device"))
+        directory = await hass.async_add_executor_job(_backup_dir, hass)
+        target = directory / f"{host}-log-{stamp}.txt"
         await hass.async_add_executor_job(_write_text, target, log)
-        return {"filename": target.name, "path": str(target), "bytes": len(log)}
+        return {"filename": target.name, "path": str(target), "bytes": len(log.encode("utf-8"))}
 
     async def handle_restart(call: ServiceCall) -> None:
         _entry, client = await _client_from_call(hass, call)
@@ -172,7 +181,11 @@ async def async_setup_services(hass: HomeAssistant) -> None:
         DOMAIN, SERVICE_BACKUP, handle_backup, supports_response=SupportsResponse.ONLY
     )
     hass.services.async_register(
-        DOMAIN, SERVICE_RESTORE, handle_restore, supports_response=SupportsResponse.ONLY
+        DOMAIN,
+        SERVICE_RESTORE,
+        handle_restore,
+        schema=RESTORE_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
     )
     hass.services.async_register(
         DOMAIN,

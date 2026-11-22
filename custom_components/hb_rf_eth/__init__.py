@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import logging
-
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import config_validation as cv
@@ -20,8 +18,6 @@ from .const import (
 )
 from .coordinator import HbRfEthCoordinator
 from .services import async_setup_services
-
-_LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = ("binary_sensor", "sensor", "update")
 
@@ -59,8 +55,6 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
     # async_setup is not reliably called for config-flow-only integrations,
     # so the services register here, once, on the first configured gateway.
     await async_setup_services(hass)
-    if entry_options(entry).get(CONF_SERVICES_ONLY):
-        await _async_remove_entity_registry_entries(hass, entry)
     client = HbRfEthClient(
         entry.data[CONF_HOST],
         entry.data.get(CONF_USERNAME, "admin"),
@@ -77,13 +71,16 @@ async def async_setup_entry(hass: HomeAssistant, entry) -> bool:
         poll_interval=options.get(
             CONF_POLL_INTERVAL, DEFAULT_POLL_INTERVAL_SECONDS
         ),
+        config_entry=entry,
     )
     try:
         await coordinator.async_config_entry_first_refresh()
-    except Exception:  # noqa: BLE001 - surface as config error
+    except Exception:
         await client.close()
-        _LOGGER.exception("initial refresh failed")
-        return False
+        raise
+
+    if options.get(CONF_SERVICES_ONLY):
+        await _async_remove_entity_registry_entries(hass, entry)
 
     hass.data[DOMAIN][entry.entry_id] = {"client": client, "coordinator": coordinator}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

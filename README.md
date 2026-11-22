@@ -37,7 +37,9 @@ Firmware **2.4.0 or newer** is required (update status with
 | `hb_rf_eth.restart` | Restarts the gateway |
 | `hb_rf_eth.update_check` | Starts a manual update search (optional `channel: stable\|beta`) |
 
-All services target the gateway via the usual device/entity selectors.
+Each service operates on one loaded gateway. Select a device or entity
+when you have multiple gateways. With a single loaded gateway, the target
+is optional.
 Backups contain secrets — treat the backup folder accordingly.
 
 ## Setup

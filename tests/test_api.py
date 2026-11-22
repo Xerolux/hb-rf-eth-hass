@@ -9,6 +9,7 @@ from custom_components.hb_rf_eth.api import (
     HbRfEthApiError,
     HbRfEthAuthError,
     HbRfEthClient,
+    HbRfEthConnectionError,
 )
 
 from .conftest import BACKUP_RESPONSE, HOST, LOGIN_RESPONSE, SYSINFO_RESPONSE
@@ -51,15 +52,34 @@ async def test_relogin_after_expired_token(client, aioclient_mock):
     aioclient_mock.get(f"{HOST_URL}/sysinfo.json", status=401)
     client._token = "stale-token"
 
-    from custom_components.hb_rf_eth.api import HbRfEthConnectionError
-
-    with pytest.raises(HbRfEthConnectionError):
+    with pytest.raises(HbRfEthAuthError):
         await client.async_sysinfo()
 
     # Exactly one relogin attempt after the rejected token (zero logins
     # would mean the stale token was never challenged and retried).
     logins = [c for c in aioclient_mock.mock_calls if str(c[1]).endswith("/login.json")]
     assert len(logins) == 1
+    assert client._token is None
+    await client.close()
+
+
+async def test_timed_out_restart_is_not_retried(client, aioclient_mock):
+    aioclient_mock.post(f"{HOST_URL}/login.json", json=LOGIN_RESPONSE)
+    aioclient_mock.post(f"{HOST_URL}/api/restart", exc=TimeoutError())
+
+    with pytest.raises(HbRfEthConnectionError):
+        await client.async_restart()
+
+    assert [call[0] for call in aioclient_mock.mock_calls] == ["POST", "POST"]
+    await client.close()
+
+
+async def test_invalid_sysinfo_is_rejected(client, aioclient_mock):
+    aioclient_mock.post(f"{HOST_URL}/login.json", json=LOGIN_RESPONSE)
+    aioclient_mock.get(f"{HOST_URL}/sysinfo.json", json={"sysInfo": []})
+
+    with pytest.raises(HbRfEthApiError, match="sysInfo"):
+        await client.async_sysinfo()
     await client.close()
 
 

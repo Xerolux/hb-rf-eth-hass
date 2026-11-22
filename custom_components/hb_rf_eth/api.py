@@ -6,6 +6,7 @@ to carry ``Authorization: Token <token>`` (not Bearer). Tokens survive reboots.
 
 from __future__ import annotations
 
+from ipaddress import IPv6Address
 from typing import Any
 
 import aiohttp
@@ -40,10 +41,16 @@ class HbRfEthClient:
         password: str,
         session: aiohttp.ClientSession | None = None,
     ) -> None:
-        self._host = host.rstrip("/")
+        authority = host.strip().rstrip("/")
+        try:
+            IPv6Address(authority)
+        except ValueError:
+            pass
+        else:
+            authority = f"[{authority}]"
         self._username = username
         self._password = password
-        self._base = f"http://{self._host}"
+        self._base = f"http://{authority}"
         self._token: str | None = None
         # An external session (the HA shared session) is used but never
         # owned: close() leaves it open. Tests inject the mocked session.

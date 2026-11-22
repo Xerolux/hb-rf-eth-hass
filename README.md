@@ -58,6 +58,8 @@ the existing device and entity IDs. Leave the password field blank to
 keep the saved password. If the gateway rejects the saved credentials,
 Home Assistant prompts for reauthentication.
 
+For remote gateways, see [Tailscale setup](docs/guide.md#connect-a-remote-gateway-over-tailscale).
+
 ### Options (Configure on the config entry)
 
 | Option | Description |

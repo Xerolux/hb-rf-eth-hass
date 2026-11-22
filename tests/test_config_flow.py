@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.data_entry_flow import FlowResultType
@@ -28,6 +29,30 @@ async def test_user_flow_creates_entry(hass, aioclient_mock):
     assert result["type"] == FlowResultType.CREATE_ENTRY
     assert result["title"] == "hb-rf-eth-test"
     assert result["data"] == USER_INPUT
+    assert result["context"]["unique_id"] == SERIAL
+
+
+@pytest.mark.parametrize(
+    ("host", "authority"),
+    [
+        ("100.101.102.103", "100.101.102.103"),
+        ("gateway.example.ts.net:8080", "gateway.example.ts.net:8080"),
+        ("fd7a:115c:a1e0::42", "[fd7a:115c:a1e0::42]"),
+    ],
+)
+async def test_user_flow_accepts_remote_addresses(hass, aioclient_mock, host, authority):
+    base_url = f"http://{authority}"
+    aioclient_mock.post(f"{base_url}/login.json", json=LOGIN_RESPONSE)
+    aioclient_mock.get(f"{base_url}/sysinfo.json", json=SYSINFO_RESPONSE)
+    aioclient_mock.get(f"{base_url}/api/update/status", json={})
+    result = await hass.config_entries.flow.async_init(
+        DOMAIN, context={"source": config_entries.SOURCE_USER},
+        data={**USER_INPUT, CONF_HOST: host},
+    )
+    await hass.async_block_till_done()
+
+    assert result["type"] == FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_HOST] == host
     assert result["context"]["unique_id"] == SERIAL
 
 

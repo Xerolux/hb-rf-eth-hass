@@ -15,6 +15,21 @@ Gateway. Falls es dort nicht erscheint, wähle **Integration hinzufügen →
 HB-RF-ETH** und gib die IP-Adresse oder den mDNS-Namen ein. Verwende die
 Zugangsdaten der Gateway-Weboberfläche.
 
+## Entferntes Gateway über Tailscale verbinden
+
+Betreibe am Gateway-Standort einen [Tailscale-Subnet-Router](https://tailscale.com/docs/features/subnet-routers).
+Gib die LAN-Adresse als Einzelroute oder das passende Subnetz frei.
+Genehmige die Route in Tailscale und erlaube Home Assistant den Zugriff auf
+den HTTP-Port des Gateways. Der Home-Assistant-Prozess muss diese Route
+nutzen können. Füge jedes Gateway manuell über seine LAN-IP hinzu.
+
+Wenn ein Tailscale-Knoten HTTP an das Gateway weiterleitet, verwende seine
+Tailscale-IP oder seinen MagicDNS-Namen. Gib bei einem abweichenden Port
+auch den Port an. Trage die Adresse ohne HTTP-Präfix ein und verwende pro
+Gateway eine eigene Adresse oder einen eigenen Port. Die Integration nutzt
+diese Verbindung für REST-Status und Aktionen. Eine CCU oder OpenCCU
+braucht einen eigenen Netzwerkpfad zur Funkschnittstelle des Gateways.
+
 ## Adresse oder Passwort ändern
 
 Öffne **Neu konfigurieren** am Integrationseintrag und gib die aktuelle

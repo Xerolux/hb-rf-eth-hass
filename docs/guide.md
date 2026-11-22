@@ -13,6 +13,20 @@ Open **Settings → Devices & services** and confirm the discovered gateway.
 If it is absent, choose **Add integration → HB-RF-ETH** and enter the gateway's
 IP address or mDNS name. Use the username and password from the gateway WebUI.
 
+## Connect a remote gateway over Tailscale
+
+Run a [Tailscale subnet router](https://tailscale.com/docs/features/subnet-routers)
+at the gateway site. Advertise the gateway's LAN address as a host route or
+advertise its subnet, approve the route in Tailscale, and allow the Home
+Assistant host to reach the gateway's HTTP port. The Home Assistant process
+must be able to use this route. Add each gateway manually using its LAN IP.
+
+If a tailnet node forwards HTTP to the gateway, use that node's Tailscale IP
+or MagicDNS name, with the forwarded port if it differs from 80. Enter the
+address without an HTTP prefix. Use one address or port per gateway. The
+integration uses this connection for REST status and actions. A CCU or
+OpenCCU needs its own network path to the gateway's radio interface.
+
 ## Change the address or password
 
 Open **Reconfigure** on the integration entry. Enter the current IP address
